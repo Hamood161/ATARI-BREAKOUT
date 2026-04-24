@@ -10,6 +10,7 @@
             border-radius: 10px;
             text-align: center;
             width: 260px;
+            margin-top: 20px;
         }
         h2 { color: #f39c12; margin: 2px 0; font-size: 14px; text-transform: uppercase; }
         canvas { 
@@ -60,7 +61,7 @@
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    // SPEED REDUCED HERE (2.5 instead of 4)
+    // Initial speed
     let dx = 2.5; 
     let dy = -2.5; 
     
@@ -68,7 +69,8 @@
     const paddleHeight = 15;
     const paddleWidth = 100;
     let paddleX = (canvas.width - paddleWidth) / 2;
-    let rightPressed = false; let leftPressed = false;
+    let rightPressed = false; 
+    let leftPressed = false;
 
     const brickRowCount = 3;
     const brickColumnCount = 6;
@@ -81,7 +83,9 @@
     function initBricks() {
         for(let c = 0; c < brickColumnCount; c++) {
             bricks[c] = [];
-            for(let r = 0; r < brickRowCount; r++) { bricks[c][r] = { x: 0, y: 0, status: 1 }; }
+            for(let r = 0; r < brickRowCount; r++) { 
+                bricks[c][r] = { x: 0, y: 0, status: 1 }; 
+            }
         }
     }
 
@@ -112,47 +116,80 @@
         }
         score = 0;
         document.getElementById("currentScore").innerText = score;
-        x = canvas.width / 2; y = canvas.height - 30;
-        dx = 2.5; dy = -2.5;
+        x = canvas.width / 2; 
+        y = canvas.height - 30;
+        dx = 2.5; 
+        dy = -2.5;
         paddleX = (canvas.width - paddleWidth) / 2;
         initBricks();
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let activeBricks = 0;
+
         bricks.forEach((col, c) => col.forEach((b, r) => {
             if(b.status == 1) {
+                activeBricks++;
                 let bx = (c*(brickSize+brickPadding))+brickOffsetLeft;
                 let by = (r*(brickSize+brickPadding))+brickOffsetTop;
                 b.x = bx; b.y = by;
+                
                 ctx.beginPath();
                 ctx.rect(bx, by, brickSize, brickSize);
                 ctx.fillStyle = "#f39c12";
                 ctx.fill();
                 ctx.closePath();
+
                 if(x > bx && x < bx+brickSize && y > by && y < by+brickSize) {
-                    dy = -dy; b.status = 0; score += 10;
+                    dy = -dy; 
+                    b.status = 0; 
+                    score += 10;
                     document.getElementById("currentScore").innerText = score;
                 }
             }
         }));
-        ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-        ctx.fillStyle = "#fff"; ctx.fill(); ctx.closePath();
-        ctx.beginPath(); ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#f39c12"; ctx.fill(); ctx.closePath();
+
+        // Infinite Mode: Respawn bricks if all are gone
+        if(activeBricks === 0) {
+            initBricks();
+            // Slightly increase speed for the next wave
+            dx *= 1.15;
+            dy *= 1.15;
+        }
+
+        // Draw Ball
+        ctx.beginPath(); 
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#fff"; 
+        ctx.fill(); 
+        ctx.closePath();
+
+        // Draw Paddle
+        ctx.beginPath(); 
+        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#f39c12"; 
+        ctx.fill(); 
+        ctx.closePath();
         
+        // Wall Collisions
         if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
         if(y + dy < ballRadius) dy = -dy;
         else if(y + dy > canvas.height-ballRadius) {
-            if(x > paddleX && x < paddleX + paddleWidth) dy = -dy;
-            else resetGame();
+            if(x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+            } else {
+                resetGame();
+            }
         }
 
-        // PADDLE SPEED (Increased to 9 for better control)
+        // Paddle Movement
         if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 9;
         else if(leftPressed && paddleX > 0) paddleX -= 9;
         
-        x += dx; y += dy;
+        x += dx; 
+        y += dy;
         requestAnimationFrame(draw);
     }
 
