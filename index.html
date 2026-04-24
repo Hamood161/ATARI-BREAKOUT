@@ -1,40 +1,206 @@
 <style>
     body { 
-        background: #1a1a1a; /* Dark background for contrast */
+        background: #1a1a1a; 
         display: flex; 
+        flex-direction: column;
         justify-content: center; 
         align-items: center; 
-        height: 100vh; 
+        min-height: 100vh; 
         margin: 0; 
-        font-family: Arial, sans-serif;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    /* This is your "Box" */
     .game-container {
         background: #333;
         padding: 20px;
-        border: 4px solid #f39c12; /* "Fried Liver" Orange */
+        border: 4px solid #f39c12; 
         border-radius: 15px;
         box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 10px #f39c12;
         text-align: center;
+        width: 500px;
     }
 
-    canvas { 
-        background: #000; 
-        display: block; 
-        margin: 0 auto; 
-        border: 2px solid #555;
+    canvas { background: #000; display: block; margin: 10px auto; border: 2px solid #555; }
+
+    .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    
+    input[type="text"] {
+        background: #222;
+        border: 1px solid #f39c12;
+        color: #fff;
+        padding: 5px;
+        border-radius: 4px;
+        width: 120px;
     }
 
-    h2 { color: #f39c12; margin-bottom: 10px; text-transform: uppercase; }
-    p { color: #ccc; font-size: 12px; margin-top: 10px; }
+    .leaderboard {
+        margin-top: 15px;
+        color: #f39c12;
+        background: #222;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: left;
+    }
+
+    h2 { color: #f39c12; margin: 0; font-size: 20px; }
+    .score-text { color: #fff; font-weight: bold; }
+    ol { margin: 5px 0; color: #fff; padding-left: 25px; }
+    li { margin-bottom: 3px; }
 </style>
 
 <body>
     <div class="game-container">
-        <h2>Fried Liver Arcade</h2>
+        <div class="ui-row">
+            <h2>Fried Liver Arcade</h2>
+            <input type="text" id="playerName" placeholder="Enter Name..." maxlength="10">
+        </div>
+        
+        <div class="ui-row">
+            <div class="score-text">Score: <span id="currentScore">0</span></div>
+            <div style="color: #888; font-size: 12px;">Arrows to Move</div>
+        </div>
+
         <canvas id="gameCanvas" width="480" height="320"></canvas>
-        <p>Use Arrow Keys to Move</p>
+        
+        <div class="leaderboard">
+            <strong style="display:block; text-align:center; margin-bottom:5px;">🏆 HALL OF FAME</strong>
+            <ol id="highScoresList">
+                <li>Waiting for legends...</li>
+            </ol>
+        </div>
     </div>
 
-    </body>
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const nameInput = document.getElementById("playerName");
+
+    let score = 0;
+    // Load existing scores from browser memory
+    let highScores = JSON.parse(localStorage.getItem('fls_scores')) || [];
+
+    // Game variables
+    let x = canvas.width / 2;
+    let y = canvas.height - 30;
+    let dx = 2;
+    let dy = -2;
+    const ballRadius = 8;
+    const paddleHeight = 10;
+    const paddleWidth = 75;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let rightPressed = false;
+    let leftPressed = false;
+
+    // Bricks
+    const brickRowCount = 3;
+    const brickColumnCount = 5;
+    const brickWidth = 80;
+    const brickHeight = 20;
+    const brickPadding = 10;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 15;
+    let bricks = [];
+
+    function initBricks() {
+        for(let c=0; c<brickColumnCount; c++) {
+            bricks[c] = [];
+            for(let r=0; r<brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+    }
+    initBricks();
+    renderLeaderboard();
+
+    document.addEventListener("keydown", (e) => {
+        if(e.key == "Right" || e.key == "ArrowRight") rightPressed = true;
+        if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = true;
+    });
+    document.addEventListener("keyup", (e) => {
+        if(e.key == "Right" || e.key == "ArrowRight") rightPressed = false;
+        if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = false;
+    });
+
+    function renderLeaderboard() {
+        const list = document.getElementById("highScoresList");
+        list.innerHTML = highScores.length > 0 
+            ? highScores.map(s => `<li>${s.name}: ${s.val}</li>`).join("")
+            : "<li>No scores yet!</li>";
+    }
+
+    function saveScore() {
+        const name = nameInput.value.trim() || "Anonymous";
+        highScores.push({ name: name, val: score });
+        highScores.sort((a, b) => b.val - a.val);
+        highScores = highScores.slice(0, 3);
+        localStorage.setItem('fls_scores', JSON.stringify(highScores));
+        renderLeaderboard();
+    }
+
+    function resetGame() {
+        saveScore();
+        score = 0;
+        document.getElementById("currentScore").innerText = score;
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = 2; dy = -2;
+        paddleX = (canvas.width - paddleWidth) / 2;
+        initBricks();
+    }
+
+    function collisionDetection() {
+        for(let c=0; c<brickColumnCount; c++) {
+            for(let r=0; r<brickRowCount; r++) {
+                let b = bricks[c][r];
+                if(b.status == 1) {
+                    if(x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight) {
+                        dy = -dy;
+                        b.status = 0;
+                        score += 10;
+                        document.getElementById("currentScore").innerText = score;
+                    }
+                }
+            }
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        bricks.forEach((col, c) => col.forEach((b, r) => {
+            if(b.status == 1) {
+                let bx = (c*(brickWidth+brickPadding))+brickOffsetLeft;
+                let by = (r*(brickHeight+brickPadding))+brickOffsetTop;
+                b.x = bx; b.y = by;
+                ctx.beginPath();
+                ctx.rect(bx, by, brickWidth, brickHeight);
+                ctx.fillStyle = "#f39c12";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }));
+
+        ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#fff"; ctx.fill(); ctx.closePath();
+
+        ctx.beginPath(); ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#f39c12"; ctx.fill(); ctx.closePath();
+
+        collisionDetection();
+
+        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
+        if(y + dy < ballRadius) dy = -dy;
+        else if(y + dy > canvas.height-ballRadius) {
+            if(x > paddleX && x < paddleX + paddleWidth) dy = -dy;
+            else resetGame();
+        }
+
+        if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 7;
+        else if(leftPressed && paddleX > 0) paddleX -= 7;
+
+        x += dx; y += dy;
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
