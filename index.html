@@ -11,26 +11,39 @@
             text-align: center;
             width: 260px;
             margin-top: 20px;
+            position: relative;
         }
         h2 { color: #f39c12; margin: 2px 0; font-size: 14px; text-transform: uppercase; }
+        
+        /* Canvas and Overlay Styling */
+        .canvas-wrapper { position: relative; width: 240px; height: 160px; margin: 5px auto; }
         canvas { 
             background: #000 !important; 
             display: block; 
-            margin: 5px auto; 
             border: 1px solid #555;
-            width: 240px; 
-            height: 160px;
+            width: 100%; 
+            height: 100%;
         }
+        #startOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 10;
+        }
+        .play-button {
+            width: 0; height: 0; 
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 30px solid #f39c12;
+            margin-left: 10px;
+        }
+
         .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         input { background: #222; border: 1px solid #f39c12; color: #fff; font-size: 10px; width: 70px; padding: 3px; }
         .score-text { color: #fff; font-size: 12px; font-weight: bold; }
         .leaderboard { 
-            margin-top: 8px; 
-            background: #000; 
-            border: 1px solid #f39c12;
-            padding: 5px; 
-            border-radius: 5px; 
-            text-align: left; 
+            margin-top: 8px; background: #000; border: 1px solid #f39c12;
+            padding: 5px; border-radius: 5px; text-align: left; 
         }
         .leaderboard strong { color: #f39c12; font-size: 10px; display: block; text-align: center; }
         ol { margin: 5px 0; color: #fff !important; padding-left: 25px; font-size: 11px; }
@@ -44,7 +57,14 @@
             <input type="text" id="playerName" placeholder="Name..." maxlength="10">
             <div class="score-text">Score: <span id="currentScore">0</span></div>
         </div>
-        <canvas id="gameCanvas" width="480" height="320"></canvas>
+        
+        <div class="canvas-wrapper">
+            <div id="startOverlay" onclick="startGame()">
+                <div class="play-button"></div>
+            </div>
+            <canvas id="gameCanvas" width="480" height="320"></canvas>
+        </div>
+
         <div class="leaderboard">
             <strong>🏆 HALL OF FAME</strong>
             <ol id="highScoresList"><li>No scores yet...</li></ol>
@@ -55,20 +75,16 @@
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const nameInput = document.getElementById("playerName");
+    const overlay = document.getElementById("startOverlay");
+    
     let score = 0;
+    let gameRunning = false;
     let highScores = JSON.parse(localStorage.getItem('fls_scores')) || [];
 
-    let x = canvas.width / 2;
-    let y = canvas.height - 30;
-    
-    // Initial speed
-    let dx = 2.5; 
-    let dy = -2.5; 
-    
+    let x, y, dx, dy, paddleX;
     const ballRadius = 10;
     const paddleHeight = 15;
     const paddleWidth = 100;
-    let paddleX = (canvas.width - paddleWidth) / 2;
     let rightPressed = false; 
     let leftPressed = false;
 
@@ -84,9 +100,23 @@
     function initBricks() {
         for(let c = 0; c < brickColumnCount; c++) {
             bricks[c] = [];
-            for(let r = 0; r < brickRowCount; r++) { 
-                bricks[c][r] = { x: 0, y: 0, status: 1 }; 
-            }
+            for(let r = 0; r < brickRowCount; r++) { bricks[c][r] = { x: 0, y: 0, status: 1 }; }
+        }
+    }
+
+    function startGame() {
+        overlay.style.display = "none";
+        score = 0;
+        document.getElementById("currentScore").innerText = score;
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = 2.5;
+        dy = -2.5;
+        paddleX = (canvas.width - paddleWidth) / 2;
+        initBricks();
+        if (!gameRunning) {
+            gameRunning = true;
+            draw();
         }
     }
 
@@ -107,6 +137,8 @@
     }
 
     function resetGame() {
+        gameRunning = false;
+        overlay.style.display = "flex";
         const name = nameInput.value.trim() || "Player";
         if(score > 0) {
             highScores.push({ name: name, val: score });
@@ -115,87 +147,56 @@
             localStorage.setItem('fls_scores', JSON.stringify(highScores));
             renderLeaderboard();
         }
-        score = 0;
-        document.getElementById("currentScore").innerText = score;
-        x = canvas.width / 2; 
-        y = canvas.height - 30;
-        dx = 2.5; 
-        dy = -2.5;
-        paddleX = (canvas.width - paddleWidth) / 2;
-        initBricks();
     }
 
     function draw() {
+        if (!gameRunning) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         let bricksRemaining = 0;
-
         bricks.forEach((col, c) => col.forEach((b, r) => {
             if(b.status == 1) {
                 bricksRemaining++;
                 let bx = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
                 let by = (r * (brickHeight + brickPadding)) + brickOffsetTop;
                 b.x = bx; b.y = by;
-                
                 ctx.beginPath();
                 ctx.rect(bx, by, brickWidth, brickHeight);
                 ctx.fillStyle = "#f39c12";
                 ctx.fill();
                 ctx.closePath();
-
                 if(x > bx && x < bx + brickWidth && y > by && y < by + brickHeight) {
-                    dy = -dy; 
-                    b.status = 0; 
-                    score += 10;
+                    dy = -dy; b.status = 0; score += 10;
                     document.getElementById("currentScore").innerText = score;
                 }
             }
         }));
 
-        // --- INFINITE MODE LOGIC ---
         if(bricksRemaining === 0) {
             initBricks();
-            dx *= 1.15; // Ball speed increases 15% each clear
-            dy *= 1.15;
+            dx *= 1.15; dy *= 1.15; // Infinite speed boost
         }
 
-        // Draw Ball
-        ctx.beginPath(); 
-        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-        ctx.fillStyle = "#fff"; 
-        ctx.fill(); 
-        ctx.closePath();
-
-        // Draw Paddle
-        ctx.beginPath(); 
-        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = "#f39c12"; 
-        ctx.fill(); 
-        ctx.closePath();
+        ctx.beginPath(); ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#fff"; ctx.fill(); ctx.closePath();
+        ctx.beginPath(); ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#f39c12"; ctx.fill(); ctx.closePath();
         
-        // Collisions
         if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
         if(y + dy < ballRadius) dy = -dy;
         else if(y + dy > canvas.height - ballRadius) {
-            if(x > paddleX && x < paddleX + paddleWidth) {
-                dy = -dy;
-            } else {
-                resetGame();
-            }
+            if(x > paddleX && x < paddleX + paddleWidth) dy = -dy;
+            else { resetGame(); return; }
         }
 
-        // Paddle Movement
         if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 9;
         else if(leftPressed && paddleX > 0) paddleX -= 9;
         
-        x += dx; 
-        y += dy;
+        x += dx; y += dy;
         requestAnimationFrame(draw);
     }
 
-    initBricks();
     renderLeaderboard();
-    draw();
 </script>
 </body>
 </html>
