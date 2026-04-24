@@ -61,7 +61,7 @@
     let x = canvas.width / 2;
     let y = canvas.height - 30;
     
-    // Initial Speeds
+    // Initial speed
     let dx = 2.5; 
     let dy = -2.5; 
     
@@ -152,11 +152,10 @@
             }
         }));
 
-        // INFINITE LOGIC: Respawn bricks when all are gone
+        // --- INFINITE MODE LOGIC ---
         if(bricksRemaining === 0) {
             initBricks();
-            // Increase speed by 15% each wave
-            dx *= 1.15;
+            dx *= 1.15; // Ball speed increases 15% each clear
             dy *= 1.15;
         }
 
@@ -169,15 +168,15 @@
 
         // Draw Paddle
         ctx.beginPath(); 
-        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
         ctx.fillStyle = "#f39c12"; 
         ctx.fill(); 
         ctx.closePath();
         
-        // Wall Collisions
-        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
+        // Collisions
+        if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
         if(y + dy < ballRadius) dy = -dy;
-        else if(y + dy > canvas.height-ballRadius) {
+        else if(y + dy > canvas.height - ballRadius) {
             if(x > paddleX && x < paddleX + paddleWidth) {
                 dy = -dy;
             } else {
@@ -186,7 +185,7 @@
         }
 
         // Paddle Movement
-        if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 9;
+        if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 9;
         else if(leftPressed && paddleX > 0) paddleX -= 9;
         
         x += dx; 
