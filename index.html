@@ -4,38 +4,36 @@
     <style>
         body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; font-family: sans-serif; overflow: hidden; }
         .game-container {
-            background: #333;
-            padding: 8px;
+            background: #333 !important; 
+            padding: 10px;
             border: 3px solid #f39c12; 
             border-radius: 10px;
             text-align: center;
-            width: 250px;
+            width: 260px;
         }
         h2 { color: #f39c12; margin: 2px 0; font-size: 14px; text-transform: uppercase; }
         canvas { 
-            background: #000; 
+            background: #000 !important; 
             display: block; 
             margin: 5px auto; 
             border: 1px solid #555;
-            width: 230px; 
-            height: 150px;
+            width: 240px; 
+            height: 160px;
         }
         .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        input { background: #222; border: 1px solid #f39c12; color: #fff; font-size: 10px; width: 65px; padding: 2px; }
-        .score-text { color: #fff; font-size: 11px; font-weight: bold; }
-        
-        /* FIX FOR INVISIBLE NAMES */
+        input { background: #222; border: 1px solid #f39c12; color: #fff; font-size: 10px; width: 70px; padding: 3px; }
+        .score-text { color: #fff; font-size: 12px; font-weight: bold; }
         .leaderboard { 
-            margin-top: 5px; 
-            color: #f39c12; 
+            margin-top: 8px; 
             background: #000; 
+            border: 1px solid #f39c12;
             padding: 5px; 
             border-radius: 5px; 
             text-align: left; 
         }
-        .leaderboard strong { font-size: 10px; display: block; text-align: center; margin-bottom: 3px; }
-        ol { margin: 0; color: #ffffff !important; padding-left: 20px; font-size: 11px; }
-        li { color: #ffffff !important; list-style: decimal; }
+        .leaderboard strong { color: #f39c12; font-size: 10px; display: block; text-align: center; }
+        ol { margin: 5px 0; color: #fff !important; padding-left: 25px; font-size: 11px; }
+        li { color: #fff !important; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -95,12 +93,12 @@
     function renderLeaderboard() {
         const list = document.getElementById("highScoresList");
         list.innerHTML = highScores.length > 0 
-            ? highScores.map(s => `<li>${s.name}: ${s.val}</li>`).join("")
-            : "<li>Play to be first!</li>";
+            ? highScores.map(s => `<li style="color:white;">${s.name}: ${s.val}</li>`).join("")
+            : "<li style='color:white;'>Play a game!</li>";
     }
 
     function resetGame() {
-        const name = nameInput.value.trim() || "Anonymous";
+        const name = nameInput.value.trim() || "Player";
         if(score > 0) {
             highScores.push({ name: name, val: score });
             highScores.sort((a, b) => b.val - a.val);
@@ -125,7 +123,7 @@
                 b.x = bx; b.y = by;
                 ctx.beginPath();
                 ctx.rect(bx, by, brickSize, brickSize);
-                ctx.fillStyle = "#f39c12";
+                ctx.fillStyle = "#f39c12"; // FIXED: Added color back
                 ctx.fill();
                 ctx.closePath();
                 if(x > bx && x < bx+brickSize && y > by && y < by+brickSize) {
