@@ -1,281 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>Fried Liver Arcade | 3-in-1 Suite</title>
     <style>
-        body {
-            background: #1a1a1a;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            font-family: sans-serif;
-            overflow: hidden;
+        :root {
+            --primary: #f39c12;
+            --bg: #1a1a1a;
+            --container: #333;
         }
-        .game-container {
-            background: #333 !important;
-            padding: 10px;
-            border: 3px solid #f39c12;
-            border-radius: 10px;
-            text-align: center;
-            width: 260px;
-            margin-top: 20px;
-            position: relative;
-        }
-        h2 {
-            color: #f39c12;
-            margin: 2px 0;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-        /* Canvas and Overlay Styling */
-        .canvas-wrapper {
-            position: relative;
-            width: 240px;
-            height: 160px;
-            margin: 5px auto;
-        }
-        canvas {
-            background: #000 !important;
-            display: block;
-            border: 1px solid #555;
-            width: 100%;
-            height: 100%;
-        }
-        #startOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 10;
-        }
-        .play-button {
-            width: 0;
-            height: 0;
-            border-top: 20px solid transparent;
-            border-bottom: 20px solid transparent;
-            border-left: 30px solid #f39c12;
-            margin-left: 10px;
-        }
-        .ui-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        input {
-            background: #222;
-            border: 1px solid #f39c12;
-            color: #fff;
-            font-size: 10px;
-            width: 70px;
-            padding: 3px;
-        }
-        .score-text {
-            color: #fff;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        /* Updated Leaderboard Styling for Top 10 */
-        .leaderboard {
-            margin-top: 8px;
-            background: #000;
-            border: 1px solid #f39c12;
-            padding: 5px;
-            border-radius: 5px;
-            text-align: left;
-            max-height: 180px; /* Increased height for more names */
-            overflow-y: auto;  /* Adds scrollbar if list is very long */
-        }
-        .leaderboard strong {
-            color: #f39c12;
-            font-size: 10px;
-            display: block;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-        ol {
-            margin: 0;
-            color: #fff !important;
-            padding-left: 25px;
-            font-size: 11px;
-        }
-        li {
-            color: #fff !important;
-            margin-bottom: 2px;
-        }
+        body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Navigation */
+        nav { background: #000; width: 100%; padding: 15px 0; display: flex; justify-content: center; gap: 20px; border-bottom: 3px solid var(--primary); }
+        nav button { background: none; border: 2px solid var(--primary); color: var(--primary); padding: 8px 16px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
+        nav button:hover, nav button.active { background: var(--primary); color: #000; }
+
+        /* Game Layout */
+        .game-wrapper { margin-top: 30px; display: flex; flex-direction: column; align-items: center; width: 350px; }
+        .game-container { background: var(--container); padding: 15px; border: 3px solid var(--primary); border-radius: 12px; text-align: center; width: 100%; box-shadow: 0 0 20px rgba(243, 156, 18, 0.3); }
+        
+        canvas { background: #000; display: block; margin: 10px auto; border: 2px solid #444; width: 100%; max-width: 300px; height: auto; }
+        
+        .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        input { background: #222; border: 1px solid var(--primary); color: #fff; font-size: 11px; width: 80px; padding: 4px; border-radius: 4px; }
+        
+        /* Leaderboard */
+        .leaderboard { margin-top: 15px; background: #000; border: 1px solid var(--primary); padding: 10px; border-radius: 8px; text-align: left; width: 100%; box-sizing: border-box; }
+        .leaderboard strong { color: var(--primary); font-size: 12px; display: block; text-align: center; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        ol { margin: 0; padding-left: 25px; font-size: 11px; max-height: 120px; overflow-y: auto; }
+        li { margin-bottom: 4px; }
+        
+        #overlay { position: absolute; width: 300px; height: 200px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 5; cursor: pointer; color: var(--primary); font-weight: bold; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
+
+<nav>
+    <button onclick="switchGame('breakout')" id="btn-breakout" class="active">ATARI</button>
+    <button onclick="switchGame('pacman')" id="btn-pacman">PAC-MAN</button>
+    <button onclick="switchGame('galaga')" id="btn-galaga">GALAGA</button>
+</nav>
+
+<div class="game-wrapper">
     <div class="game-container">
-        <h2>Fried Liver Arcade</h2>
+        <h2 id="game-title">ATARI BREAKOUT</h2>
         <div class="ui-row">
-            <input type="text" id="playerName" placeholder="Name..." maxlength="10">
-            <div class="score-text">Score: <span id="currentScore">0</span></div>
+            <input type="text" id="playerName" placeholder="Enter Name" maxlength="10">
+            <div id="score-display">PTS: 0</div>
         </div>
-        <div class="canvas-wrapper">
-            <div id="startOverlay" onclick="startGame()">
-                <div class="play-button"></div>
-            </div>
-            <canvas id="gameCanvas" width="480" height="320"></canvas>
+        
+        <div style="position: relative;">
+            <div id="overlay" onclick="initGame()">CLICK TO START</div>
+            <canvas id="gameCanvas" width="300" height="200"></canvas>
         </div>
+
         <div class="leaderboard">
-            <strong>🏆 HALL OF FAME (TOP 10)</strong>
-            <ol id="highScoresList"><li>No scores yet...</li></ol>
+            <strong>🏆 TOP 10 HALL OF FAME</strong>
+            <ol id="highScoresList"></ol>
         </div>
     </div>
+</div>
 
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const nameInput = document.getElementById("playerName");
-        const overlay = document.getElementById("startOverlay");
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    let currentGame = 'breakout';
+    let score = 0;
+    let gameActive = false;
+    let loop;
+
+    // Game Objects
+    let player = { x: 125, y: 180, w: 50, h: 10 };
+    let ball = { x: 150, y: 150, dx: 2, dy: -2, r: 5 };
+    let items = []; // Bricks, dots, or enemies
+
+    function switchGame(game) {
+        currentGame = game;
+        gameActive = false;
+        cancelAnimationFrame(loop);
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${game}`).classList.add('active');
+        document.getElementById('game-title').innerText = game.toUpperCase();
+        document.getElementById('overlay').classList.remove('hidden');
+        renderLeaderboard();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function initGame() {
+        document.getElementById('overlay').classList.add('hidden');
+        score = 0;
+        gameActive = true;
         
-        let score = 0;
-        let gameRunning = false;
-        let highScores = JSON.parse(localStorage.getItem('fls_scores')) || [];
+        if(currentGame === 'breakout') {
+            player = { x: 125, y: 185, w: 50, h: 8 };
+            ball = { x: 150, y: 170, dx: 2, dy: -2, r: 5 };
+            items = [];
+            for(let c=0; c<5; c++) for(let r=0; r<3; r++) items.push({x: 10+c*60, y: 30+r*20, w: 50, h: 15, status: 1});
+        } else if(currentGame === 'pacman') {
+            player = { x: 150, y: 150, r: 8, dir: 0 };
+            items = [];
+            for(let i=0; i<20; i++) items.push({x: Math.random()*280, y: Math.random()*180, r: 2});
+        } else if(currentGame === 'galaga') {
+            player = { x: 140, y: 175, w: 20, h: 15 };
+            items = []; // Enemies
+            for(let i=0; i<6; i++) items.push({x: 20+i*45, y: 20, w: 20, h: 15, speed: 1});
+        }
         
-        let x, y, dx, dy, paddleX;
-        const ballRadius = 10;
-        const paddleHeight = 15;
-        const paddleWidth = 100;
-        let rightPressed = false;
-        let leftPressed = false;
+        gameLoop();
+    }
+
+    function gameLoop() {
+        if(!gameActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        const brickRowCount = 3;
-        const brickColumnCount = 6;
-        const brickWidth = 60;
-        const brickHeight = 30;
-        const brickPadding = 12;
-        const brickOffsetTop = 40;
-        const brickOffsetLeft = 35;
-        let bricks = [];
+        if(currentGame === 'breakout') {
+            // Ball Logic
+            ball.x += ball.dx; ball.y += ball.dy;
+            if(ball.x > 295 || ball.x < 5) ball.dx *= -1;
+            if(ball.y < 5) ball.dy *= -1;
+            if(ball.y > 180 && ball.x > player.x && ball.x < player.x + player.w) ball.dy *= -1;
+            if(ball.y > 200) gameOver();
 
-        function initBricks() {
-            for(let c = 0; c < brickColumnCount; c++) {
-                bricks[c] = [];
-                for(let r = 0; r < brickRowCount; r++) {
-                    bricks[c][r] = { x: 0, y: 0, status: 1 };
-                }
-            }
-        }
-
-        function startGame() {
-            overlay.style.display = "none";
-            score = 0;
-            document.getElementById("currentScore").innerText = score;
-            x = canvas.width / 2;
-            y = canvas.height - 30;
-            dx = 2.5;
-            dy = -2.5;
-            paddleX = (canvas.width - paddleWidth) / 2;
-            initBricks();
-            if (!gameRunning) {
-                gameRunning = true;
-                draw();
-            }
-        }
-
-        document.addEventListener("keydown", (e) => {
-            if(e.key == "Right" || e.key == "ArrowRight") rightPressed = true;
-            if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = true;
-        });
-
-        document.addEventListener("keyup", (e) => {
-            if(e.key == "Right" || e.key == "ArrowRight") rightPressed = false;
-            if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = false;
-        });
-
-        function renderLeaderboard() {
-            const list = document.getElementById("highScoresList");
-            list.innerHTML = highScores.length > 0 
-                ? highScores.map(s => `<li style="color:white;">${s.name}: ${s.val}</li>`).join("") 
-                : "<li style='color:white;'>Play a game!</li>";
-        }
-
-        function resetGame() {
-            gameRunning = false;
-            overlay.style.display = "flex";
-            const name = nameInput.value.trim() || "Player";
-            
-            if(score > 0) {
-                highScores.push({ name: name, val: score });
-                highScores.sort((a, b) => b.val - a.val);
-                // logic updated here: slice(0, 10) instead of (0, 3)
-                highScores = highScores.slice(0, 10); 
-                localStorage.setItem('fls_scores', JSON.stringify(highScores));
-                renderLeaderboard();
-            }
-        }
-
-        function draw() {
-            if (!gameRunning) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            let bricksRemaining = 0;
-            bricks.forEach((col, c) => col.forEach((b, r) => {
-                if(b.status == 1) {
-                    bricksRemaining++;
-                    let bx = (c * (brickWidth + brickPadding)) + brickOffsetLeft;
-                    let by = (r * (brickHeight + brickPadding)) + brickOffsetTop;
-                    b.x = bx;
-                    b.y = by;
-                    ctx.beginPath();
-                    ctx.rect(bx, by, brickWidth, brickHeight);
+            // Bricks
+            items.forEach(b => {
+                if(b.status === 1) {
                     ctx.fillStyle = "#f39c12";
-                    ctx.fill();
-                    ctx.closePath();
-
-                    if(x > bx && x < bx + brickWidth && y > by && y < by + brickHeight) {
-                        dy = -dy;
-                        b.status = 0;
-                        score += 10;
-                        document.getElementById("currentScore").innerText = score;
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                    if(ball.x > b.x && ball.x < b.x+b.w && ball.y > b.y && ball.y < b.y+b.h) {
+                        b.status = 0; ball.dy *= -1; score += 10;
                     }
                 }
-            }));
-
-            if(bricksRemaining === 0) {
-                initBricks();
-                dx *= 1.15;
-                dy *= 1.15; 
-            }
-
-            ctx.beginPath();
-            ctx.arc(x, y, ballRadius, 0, Math.PI*2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
-            ctx.closePath();
-
-            ctx.beginPath();
-            ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-            ctx.fillStyle = "#f39c12";
-            ctx.fill();
-            ctx.closePath();
-
-            if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) dx = -dx;
-            if(y + dy < ballRadius) dy = -dy;
-            else if(y + dy > canvas.height - ballRadius) {
-                if(x > paddleX && x < paddleX + paddleWidth) dy = -dy;
-                else {
-                    resetGame();
-                    return;
-                }
-            }
-
-            if(rightPressed && paddleX < canvas.width - paddleWidth) paddleX += 9;
-            else if(leftPressed && paddleX > 0) paddleX -= 9;
-
-            x += dx;
-            y += dy;
-            requestAnimationFrame(draw);
+            });
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+        } 
+        
+        else if(currentGame === 'pacman') {
+            ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0.2*Math.PI, 1.8*Math.PI); ctx.lineTo(player.x, player.y); ctx.fill();
+            items.forEach((d, i) => {
+                ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 7); ctx.fill();
+                if(Math.hypot(player.x - d.x, player.y - d.y) < 10) { items.splice(i, 1); score += 10; }
+            });
+            if(items.length === 0) gameOver();
         }
 
+        else if(currentGame === 'galaga') {
+            ctx.fillStyle = "#3498db"; ctx.fillRect(player.x, player.y, player.w, player.h);
+            items.forEach(en => {
+                en.y += en.speed; ctx.fillStyle = "red"; ctx.fillRect(en.x, en.y, en.w, en.h);
+                if(en.y > 200) gameOver();
+            });
+        }
+
+        // Draw Player (Breakout/Galaga)
+        if(currentGame !== 'pacman') {
+            ctx.fillStyle = "#f39c12"; ctx.fillRect(player.x, player.y, player.w, player.h);
+        }
+
+        document.getElementById('score-display').innerText = "PTS: " + score;
+        loop = requestAnimationFrame(gameLoop);
+    }
+
+    // Input Handling
+    window.addEventListener("keydown", e => {
+        if(e.key === "ArrowLeft" && player.x > 0) player.x -= 20;
+        if(e.key === "ArrowRight" && player.x < 250) player.x += 20;
+        if(currentGame === 'pacman') {
+            if(e.key === "ArrowUp") player.y -= 10;
+            if(e.key === "ArrowDown") player.y += 10;
+        }
+    });
+
+    function gameOver() {
+        gameActive = false;
+        const name = document.getElementById('playerName').value || "GOAT";
+        const storageKey = `scores_${currentGame}`;
+        let scores = JSON.parse(localStorage.getItem(storageKey)) || [];
+        scores.push({name, val: score});
+        scores.sort((a,b) => b.val - a.val);
+        localStorage.setItem(storageKey, JSON.stringify(scores.slice(0, 10)));
+        document.getElementById('overlay').classList.remove('hidden');
         renderLeaderboard();
-    </script>
+    }
+
+    function renderLeaderboard() {
+        const storageKey = `scores_${currentGame}`;
+        const scores = JSON.parse(localStorage.getItem(storageKey)) || [];
+        document.getElementById('highScoresList').innerHTML = scores.map((s, i) => `<li>${i===0?'👑 ':''}${s.name}: ${s.val}</li>`).join("");
+    }
+
+    renderLeaderboard();
+</script>
+
 </body>
 </html>
