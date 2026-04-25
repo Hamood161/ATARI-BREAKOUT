@@ -1,1 +1,201 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><style>:root{--p:#f39c12;--b:#1a1a1a}body{background:var(--b);margin:0;font-family:sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;overflow:hidden}nav{background:#000;width:100%;padding:5px;display:flex;justify-content:center;gap:8px;border-bottom:2px solid var(--p)}button{background:none;border:1px solid var(--p);color:var(--p);padding:3px 8px;cursor:pointer;font-size:10px;font-weight:bold;border-radius:4px}button.active{background:var(--p);color:#000}.c{background:#333;padding:8px;border:2px solid var(--p);border-radius:10px;text-align:center;width:280px;margin-top:10px}canvas{background:#000;display:block;margin:5px auto;border:1px solid #444}#o{position:absolute;width:260px;height:160px;background:rgba(0,0,0,.9);display:flex;justify-content:center;align-items:center;z-index:5;cursor:pointer;color:var(--p);font-weight:bold;text-align:center;font-size:11px}.l{margin-top:5px;background:#000;border:1px solid var(--p);padding:5px;text-align:left;font-size:10px}ol{margin:0;padding-left:20px;max-height:70px;overflow:hidden}footer{margin-top:10px;font-size:9px;color:#777}a{color:var(--p);text-decoration:none}.h{display:none}h3{margin:5px;font-size:14px}</style></head><body><nav><button onclick="sw('breakout')" id="b-breakout" class="active">ATARI</button><button onclick="sw('pacman')" id="b-pacman">PAC-MAN</button><button onclick="sw('galaga')" id="b-galaga">GALAGA</button></nav><div class="c"><h3 id="t">ATARI BREAKOUT</h3><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px"><input id="n" placeholder="Name" style="width:50px;background:#222;color:#fff;border:1px solid var(--p);font-size:10px"> <span id="s">PTS: 0</span></div><div style="position:relative;width:260px;height:160px;margin:0 auto"><div id="o" onclick="st()">JOIN FRIED LIVER SOCIETY TO PLAY</div><canvas id="cv" width="260" height="160"></canvas></div><div class="l"><strong>🏆 TOP 10 HALL OF FAME</strong><ol id="li"></ol></div></div><footer>© 2026 <a href="https://www.chess.com/member/hamood161" target="_blank">Hamood161</a></footer><script>const v=document.getElementById("cv"),x=v.getContext("2d");let r='breakout',sc=0,at=0,lp,p={x:110,y:145,w:40,h:6},b={x:130,y:130,dx:2,dy:-2,r:4},it=[];function sw(g){r=g;at=0;cancelAnimationFrame(lp);document.querySelectorAll('button').forEach(k=>k.classList.toggle('active',k.id===`b-${g}`));document.getElementById('t').innerText=g.toUpperCase();document.getElementById('o').classList.remove('h');rl();x.clearRect(0,0,260,160)}function st(){document.getElementById('o').classList.add('h');sc=0;at=1;if(r==='breakout'){p={x:110,y:150,w:40,h:6};b={x:130,y:140,dx:2,dy:-2,r:4};it=[];for(let c=0;c<5;c++)for(let j=0;j<3;j++)it.push({x:10+c*50,y:20+j*15,w:40,h:10,s:1})}else if(r==='pacman'){p={x:130,y:80,r:6};it=[];for(let i=0;i<15;i++)it.push({x:10+Math.random()*240,y:10+Math.random()*140,r:2})}else if(r==='galaga'){p={x:120,y:140,w:20,h:12};it=[];for(let i=0;i<5;i++)it.push({x:20+i*45,y:15,w:20,h:12,v:1})}rn()}function rn(){if(!at)return;x.clearRect(0,0,260,160);if(r==='breakout'){b.x+=b.dx;b.y+=b.dy;if(b.x>255||b.x<5)b.dx*=-1;if(b.y<5)b.dy*=-1;if(b.y>145&&b.x>p.x&&b.x<p.x+p.w)b.dy*=-1;if(b.y>160)go();it.forEach(e=>{if(e.s){x.fillStyle="#f39c12";x.fillRect(e.x,e.y,e.w,e.h);if(b.x>e.x&&b.x<e.x+e.w&&b.y>e.y&&b.y<e.y+e.h){e.s=0;b.dy*=-1;sc+=10}}});x.fillStyle="#fff";x.beginPath();x.arc(b.x,b.y,b.r,0,Math.PI*2);x.fill()}else if(r==='pacman'){x.fillStyle="yellow";x.beginPath();x.arc(p.x,p.y,p.r,.2*Math.PI,1.8*Math.PI);x.lineTo(p.x,p.y);x.fill();it.forEach((d,i)=>{x.fillStyle="#fff";x.beginPath();x.arc(d.x,d.y,d.r,0,7);x.fill();if(Math.hypot(p.x-d.x,p.y-d.y)<8){it.splice(i,1);sc+=10}});if(!it.length)go()}else if(r==='galaga'){x.fillStyle="#3498db";x.fillRect(p.x,p.y,p.w,p.h);it.forEach(e=>{e.y+=e.v||1;x.fillStyle="red";x.fillRect(e.x,e.y,e.w,e.h);if(e.y>160)go()})}if(r!=='pacman'){x.fillStyle="#f39c12";x.fillRect(p.x,p.y,p.w,p.h)}document.getElementById('s').innerText="PTS: "+sc;lp=requestAnimationFrame(rn)}window.addEventListener("keydown",e=>{if(e.key==="ArrowLeft"&&p.x>0)p.x-=15;if(e.key==="ArrowRight"&&p.x<220)p.x+=15;if(r==='pacman'){if(e.key==="ArrowUp"&&p.y>10)p.y-=10;if(e.key==="ArrowDown"&&p.y<150)p.y+=10}});function go(){at=0;let n=document.getElementById('n').value||"GOAT",k=`s_${r}`,z=JSON.parse(localStorage.getItem(k))||[];z.push({n,sc});z.sort((a,b)=>b.sc-a.sc);localStorage.setItem(k,JSON.stringify(z.slice(0,10)));document.getElementById('o').classList.remove('h');rl()}function rl(){let k=`s_${r}`,z=JSON.parse(localStorage.getItem(k))||[];document.getElementById('li').innerHTML=z.map((m,i)=>`<li>${i===0?'👑 ':''}${m.n}:${m.sc}</li>`).join("")}rl();</script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; font-family: sans-serif; overflow: hidden; }
+        .game-container {
+            background: #333 !important; 
+            padding: 10px;
+            border: 3px solid #f39c12; 
+            border-radius: 10px;
+            text-align: center;
+            width: 260px;
+            margin-top: 20px;
+        }
+        h2 { color: #f39c12; margin: 2px 0; font-size: 14px; text-transform: uppercase; }
+        canvas { 
+            background: #000 !important; 
+            display: block; 
+            margin: 5px auto; 
+            border: 1px solid #555;
+            width: 240px; 
+            height: 160px;
+        }
+        .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        input { background: #222; border: 1px solid #f39c12; color: #fff; font-size: 10px; width: 70px; padding: 3px; }
+        .score-text { color: #fff; font-size: 12px; font-weight: bold; }
+        .leaderboard { 
+            margin-top: 8px; 
+            background: #000; 
+            border: 1px solid #f39c12;
+            padding: 5px; 
+            border-radius: 5px; 
+            text-align: left; 
+        }
+        .leaderboard strong { color: #f39c12; font-size: 10px; display: block; text-align: center; }
+        ol { margin: 5px 0; color: #fff !important; padding-left: 25px; font-size: 11px; }
+        li { color: #fff !important; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h2>Fried Liver Arcade</h2>
+        <div class="ui-row">
+            <input type="text" id="playerName" placeholder="Name..." maxlength="10">
+            <div class="score-text">Score: <span id="currentScore">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="480" height="320"></canvas>
+        <div class="leaderboard">
+            <strong>🏆 HALL OF FAME</strong>
+            <ol id="highScoresList"><li>No scores yet...</li></ol>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const nameInput = document.getElementById("playerName");
+    let score = 0;
+    let highScores = JSON.parse(localStorage.getItem('fls_scores')) || [];
+
+    let x = canvas.width / 2;
+    let y = canvas.height - 30;
+    
+    // Initial speed
+    let dx = 2.5; 
+    let dy = -2.5; 
+    
+    const ballRadius = 10;
+    const paddleHeight = 15;
+    const paddleWidth = 100;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+    let rightPressed = false; 
+    let leftPressed = false;
+
+    const brickRowCount = 3;
+    const brickColumnCount = 6;
+    const brickSize = 50; 
+    const brickPadding = 15;
+    const brickOffsetTop = 40;
+    const brickOffsetLeft = 50; 
+    let bricks = [];
+
+    function initBricks() {
+        for(let c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for(let r = 0; r < brickRowCount; r++) { 
+                bricks[c][r] = { x: 0, y: 0, status: 1 }; 
+            }
+        }
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if(e.key == "Right" || e.key == "ArrowRight") rightPressed = true;
+        if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = true;
+    });
+    document.addEventListener("keyup", (e) => {
+        if(e.key == "Right" || e.key == "ArrowRight") rightPressed = false;
+        if(e.key == "Left" || e.key == "ArrowLeft") leftPressed = false;
+    });
+
+    function renderLeaderboard() {
+        const list = document.getElementById("highScoresList");
+        list.innerHTML = highScores.length > 0 
+            ? highScores.map(s => `<li style="color:white;">${s.name}: ${s.val}</li>`).join("")
+            : "<li style='color:white;'>Play a game!</li>";
+    }
+
+    function resetGame() {
+        const name = nameInput.value.trim() || "Player";
+        if(score > 0) {
+            highScores.push({ name: name, val: score });
+            highScores.sort((a, b) => b.val - a.val);
+            highScores = highScores.slice(0, 3);
+            localStorage.setItem('fls_scores', JSON.stringify(highScores));
+            renderLeaderboard();
+        }
+        score = 0;
+        document.getElementById("currentScore").innerText = score;
+        x = canvas.width / 2; 
+        y = canvas.height - 30;
+        dx = 2.5; 
+        dy = -2.5;
+        paddleX = (canvas.width - paddleWidth) / 2;
+        initBricks();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        let activeBricks = 0;
+
+        bricks.forEach((col, c) => col.forEach((b, r) => {
+            if(b.status == 1) {
+                activeBricks++;
+                let bx = (c*(brickSize+brickPadding))+brickOffsetLeft;
+                let by = (r*(brickSize+brickPadding))+brickOffsetTop;
+                b.x = bx; b.y = by;
+                
+                ctx.beginPath();
+                ctx.rect(bx, by, brickSize, brickSize);
+                ctx.fillStyle = "#f39c12";
+                ctx.fill();
+                ctx.closePath();
+
+                if(x > bx && x < bx+brickSize && y > by && y < by+brickSize) {
+                    dy = -dy; 
+                    b.status = 0; 
+                    score += 10;
+                    document.getElementById("currentScore").innerText = score;
+                }
+            }
+        }));
+
+        // Infinite Mode: Respawn bricks if all are gone
+        if(activeBricks === 0) {
+            initBricks();
+            // Slightly increase speed for the next wave
+            dx *= 1.15;
+            dy *= 1.15;
+        }
+
+        // Draw Ball
+        ctx.beginPath(); 
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "#fff"; 
+        ctx.fill(); 
+        ctx.closePath();
+
+        // Draw Paddle
+        ctx.beginPath(); 
+        ctx.rect(paddleX, canvas.height-paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#f39c12"; 
+        ctx.fill(); 
+        ctx.closePath();
+        
+        // Wall Collisions
+        if(x + dx > canvas.width-ballRadius || x + dx < ballRadius) dx = -dx;
+        if(y + dy < ballRadius) dy = -dy;
+        else if(y + dy > canvas.height-ballRadius) {
+            if(x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+            } else {
+                resetGame();
+            }
+        }
+
+        // Paddle Movement
+        if(rightPressed && paddleX < canvas.width-paddleWidth) paddleX += 9;
+        else if(leftPressed && paddleX > 0) paddleX -= 9;
+        
+        x += dx; 
+        y += dy;
+        requestAnimationFrame(draw);
+    }
+
+    initBricks();
+    renderLeaderboard();
+    draw();
+</script>
+</body>
+</html>
