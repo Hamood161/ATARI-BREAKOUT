@@ -4,11 +4,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; font-family: sans-serif; overflow: hidden; }
+        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; font-family: sans-serif; overflow: hidden; touch-action: none; }
         .game-container { background: #333 !important; padding: 10px; border: 3px solid #f39c12; border-radius: 10px; text-align: center; width: 260px; margin-top: 5px; position: relative; }
         h2 { color: #f39c12; margin: 2px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .canvas-wrapper { position: relative; width: 240px; height: 160px; margin: 5px auto; }
-        canvas { background: #000 !important; display: block; border: 1px solid #555; width: 100%; height: 100%; }
+        .canvas-wrapper { position: relative; width: 240px; height: 160px; margin: 5px auto; touch-action: none; }
+        canvas { background: #000 !important; display: block; border: 1px solid #555; width: 100%; height: 100%; touch-action: none; }
         #startOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; }
         .play-button { width: 0; height: 0; border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-left: 25px solid #f39c12; margin-left: 8px; }
         .ui-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
@@ -63,11 +63,12 @@
     function startGame() { 
         overlay.style.display="none"; score=0; 
         document.getElementById("currentScore").innerText=score; 
-        x=canvas.width/2; y=canvas.height-30; dx=3.2; dy=-3.2; 
+        x=canvas.width/2; y=canvas.height-30; dx=3.5; dy=-3.5; 
         paddleX=(canvas.width-100)/2; initBricks(); 
         if(!gameRunning){ gameRunning=true; draw(); }
     }
 
+    // Leaderboard Sync
     db.ref('scores').orderByChild('val').limitToLast(5).on('value', (snapshot) => {
         const scores = []; snapshot.forEach(child => { scores.push(child.val()); });
         scores.sort((a,b) => b.val - a.val);
@@ -79,12 +80,36 @@
     function resetGame() { 
         gameRunning=false; overlay.style.display="flex"; 
         const name = nameInput.value.trim() || "GuestPlayer"; 
-        if(score>0) db.ref('scores').push({name:name, val:score}); 
+        if(score > 0) db.ref('scores').push({name:name, val:score}); 
     }
+
+    // --- PC Controls ---
+    document.addEventListener("keydown", (e) => keys[e.key]=true);
+    document.addEventListener("keyup", (e) => keys[e.key]=false);
+
+    // --- Phone/Tablet Controls ---
+    function handleTouch(e) {
+        if(!gameRunning) return;
+        const rect = canvas.getBoundingClientRect();
+        const touchX = e.touches[0].clientX - rect.left;
+        const scaleX = canvas.width / rect.width;
+        paddleX = (touchX * scaleX) - (100 / 2);
+        if(paddleX < 0) paddleX = 0;
+        if(paddleX > canvas.width - 100) paddleX = canvas.width - 100;
+        e.preventDefault();
+    }
+    canvas.addEventListener("touchmove", handleTouch, {passive: false});
+    canvas.addEventListener("touchstart", handleTouch, {passive: false});
 
     function draw() {
         if(!gameRunning) return; ctx.clearRect(0,0,canvas.width,canvas.height); let active=0;
-        bricks.forEach((col,c) => col.forEach((b,r) => { if(b.status==1){ active++; let bx=(c*72)+35, by=(r*42)+40; ctx.beginPath(); ctx.rect(bx,by,60,30); ctx.fillStyle="#f39c12"; ctx.fill(); ctx.closePath(); if(x>bx && x<bx+60 && y>by && y<by+30){ dy=-dy; b.status=0; score+=10; document.getElementById("currentScore").innerText=score; }}}));
+        bricks.forEach((col,c) => col.forEach((b,r) => { 
+            if(b.status==1){ 
+                active++; let bx=(c*72)+35, by=(r*42)+40; 
+                ctx.beginPath(); ctx.rect(bx,by,60,30); ctx.fillStyle="#f39c12"; ctx.fill(); ctx.closePath(); 
+                if(x>bx && x<bx+60 && y>by && y<by+30){ dy=-dy; b.status=0; score+=10; document.getElementById("currentScore").innerText=score; }
+            }
+        }));
         if(active==0){ initBricks(); dx*=1.15; dy*=1.15; }
         ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill(); ctx.closePath();
         ctx.beginPath(); ctx.rect(paddleX,canvas.height-15,100,15); ctx.fillStyle="#f39c12"; ctx.fill(); ctx.closePath();
@@ -93,8 +118,6 @@
         if(keys.ArrowRight && paddleX < canvas.width-100) paddleX+=9; else if(keys.ArrowLeft && paddleX > 0) paddleX-=9;
         x+=dx; y+=dy; requestAnimationFrame(draw);
     }
-    document.addEventListener("keydown", (e) => keys[e.key]=true);
-    document.addEventListener("keyup", (e) => keys[e.key]=false);
 </script>
 </body>
 </html>
